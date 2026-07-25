@@ -53,10 +53,10 @@ The testing tools used for this activity included:
 
 | Test | Expected Result | Actual Result | Pass/Fail |
 | --- | --- | --- | --- |
-| Build project | Build succeeds without errors | Placeholder | Placeholder |
-| GET /api/users | Returns a JSON array of users | Placeholder | Placeholder |
-| GET /api/users/{id} | Returns the user with the specified ID or 404 if not found | Placeholder | Placeholder |
-| POST /api/users | Creates a user and returns 201 Created | Placeholder | Placeholder |
-| PUT /api/users/{id} | Updates the user and returns 204 No Content | Placeholder | Placeholder |
-| DELETE /api/users/{id} | Deletes the user and returns 204 No Content | Placeholder | Placeholder |
-| GET /api/users/{id} after deletion | Returns 404 Not Found | Placeholder | Placeholder |
+| Build project | Build succeeds without errors | Build succeeds without errors | Pass |
+| GET /api/users | Returns a JSON array of users | Returns a JSON array of users | Pass |
+| GET /api/users/{id} | Returns the user with the specified ID or 404 if not found | eturns the user with the specified ID or 404 if not found | Pass |
+| POST /api/users | Creates a user and returns 201 Created | Creates a user and returns 201 Created | Pass |
+| PUT /api/users/{id} | Updates the user and returns 204 No Content | pdates the user and returns 204 No Content | Pass |
+| DELETE /api/users/{id} | Deletes the user and returns 204 No Content | Deletes the user and returns 204 No Content | Pass |
+| GET /api/users/{id} after deletion | Returns 404 Not Found | eturns 404 Not Found | Pass |

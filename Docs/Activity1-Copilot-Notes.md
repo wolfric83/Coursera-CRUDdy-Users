@@ -46,7 +46,7 @@ Although Copilot accelerated development, some parts needed careful review:
 The testing tools used for this activity included:
 
 - VS Code REST Client / .http file testing via UserManagementAPI.http
-- Postman or a similar HTTP client for manual API testing
+- Bruno as the manual HTTP client for testing the API
 - dotnet build for verifying the project compiles successfully
 
 ## 7. Test Results

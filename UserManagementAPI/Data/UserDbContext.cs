@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using UserManagementAPI.Models;
 
 namespace UserManagementAPI.Data;
 
@@ -8,4 +9,6 @@ public class UserDbContext : DbContext
         : base(options)
     {
     }
+
+    public DbSet<User> Users => Set<User>();
 }

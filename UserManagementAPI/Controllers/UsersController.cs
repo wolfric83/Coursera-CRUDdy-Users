@@ -11,12 +11,10 @@ namespace UserManagementAPI.Controllers;
 public class UsersController : ControllerBase
 {
     private readonly UserDbContext _context;
-    private readonly ILogger<UsersController> _logger;
 
-    public UsersController(UserDbContext context, ILogger<UsersController> logger)
+    public UsersController(UserDbContext context)
     {
         _context = context;
-        _logger = logger;
     }
 
     [HttpGet]
@@ -64,16 +62,7 @@ public class UsersController : ControllerBase
         };
 
         _context.Users.Add(user);
-
-        try
-        {
-            await _context.SaveChangesAsync(cancellationToken);
-        }
-        catch (DbUpdateException ex)
-        {
-            _logger.LogError(ex, "Failed to create user.");
-            return HandleDatabaseWriteFailure();
-        }
+        await _context.SaveChangesAsync(cancellationToken);
 
         return CreatedAtAction(nameof(GetUser), new { id = user.Id }, user);
     }
@@ -101,16 +90,7 @@ public class UsersController : ControllerBase
         existingUser.LastName = dto.LastName.Trim();
         existingUser.Email = normalizedEmail;
         existingUser.Department = dto.Department.Trim();
-
-        try
-        {
-            await _context.SaveChangesAsync(cancellationToken);
-        }
-        catch (DbUpdateException ex)
-        {
-            _logger.LogError(ex, "Failed to update user with ID {UserId}.", id);
-            return HandleDatabaseWriteFailure();
-        }
+        await _context.SaveChangesAsync(cancellationToken);
 
         return NoContent();
     }
@@ -126,25 +106,9 @@ public class UsersController : ControllerBase
         }
 
         _context.Users.Remove(user);
-
-        try
-        {
-            await _context.SaveChangesAsync(cancellationToken);
-        }
-        catch (DbUpdateException ex)
-        {
-            _logger.LogError(ex, "Failed to delete user with ID {UserId}.", id);
-            return HandleDatabaseWriteFailure();
-        }
+        await _context.SaveChangesAsync(cancellationToken);
 
         return NoContent();
-    }
-
-    private ObjectResult HandleDatabaseWriteFailure()
-    {
-        return Problem(
-            title: "An unexpected error occurred while processing the request.",
-            statusCode: StatusCodes.Status500InternalServerError);
     }
 
     private async Task<bool> UserExists(int id, CancellationToken cancellationToken)

@@ -1,20 +1,66 @@
 @UserManagementAPI_HostAddress = http://localhost:5012
+@ApiToken = fake-development-token-for-coursework-only
+
+### Middleware test: valid token accessing all users (expected: 200)
+GET {{UserManagementAPI_HostAddress}}/api/users
+Accept: application/json
+Authorization: Bearer {{ApiToken}}
+
+### Middleware test: no Authorization header (expected: 401)
+GET {{UserManagementAPI_HostAddress}}/api/users
+Accept: application/json
+
+### Middleware test: invalid bearer token (expected: 401)
+GET {{UserManagementAPI_HostAddress}}/api/users
+Accept: application/json
+Authorization: Bearer fake-invalid-token
+
+### Middleware test: incorrectly formatted Authorization header (expected: 401)
+GET {{UserManagementAPI_HostAddress}}/api/users
+Accept: application/json
+Authorization: {{ApiToken}}
+
+### Middleware test: valid token accessing a non-existent user (expected: 404)
+GET {{UserManagementAPI_HostAddress}}/api/users/9999
+Accept: application/json
+Authorization: Bearer {{ApiToken}}
+
+### Middleware test: valid token calling development error endpoint (expected: 500)
+GET {{UserManagementAPI_HostAddress}}/api/test/error
+Accept: application/json
+Authorization: Bearer {{ApiToken}}
+
+### Middleware test: valid token creating invalid user data (expected: 400)
+POST {{UserManagementAPI_HostAddress}}/api/users
+Content-Type: application/json
+Authorization: Bearer {{ApiToken}}
+
+{
+  "firstName": "",
+  "lastName": "Lovelace",
+  "email": "invalid-user@example.com",
+  "department": "Engineering"
+}
 
 ### GET all users
 GET {{UserManagementAPI_HostAddress}}/api/users
 Accept: application/json
+Authorization: Bearer {{ApiToken}}
 
 ### GET an existing user by ID
 GET {{UserManagementAPI_HostAddress}}/api/users/1
 Accept: application/json
+Authorization: Bearer {{ApiToken}}
 
 ### GET a non-existent user (expected: 404)
 GET {{UserManagementAPI_HostAddress}}/api/users/9999
 Accept: application/json
+Authorization: Bearer {{ApiToken}}
 
 ### POST a new user (expected: 201)
 POST {{UserManagementAPI_HostAddress}}/api/users
 Content-Type: application/json
+Authorization: Bearer {{ApiToken}}
 
 {
   "firstName": "Ada",
@@ -26,6 +72,7 @@ Content-Type: application/json
 ### POST with a missing first name (expected: 400)
 POST {{UserManagementAPI_HostAddress}}/api/users
 Content-Type: application/json
+Authorization: Bearer {{ApiToken}}
 
 {
   "firstName": "",
@@ -37,6 +84,7 @@ Content-Type: application/json
 ### POST with a whitespace-only first name (expected: 400)
 POST {{UserManagementAPI_HostAddress}}/api/users
 Content-Type: application/json
+Authorization: Bearer {{ApiToken}}
 
 {
   "firstName": "   ",
@@ -48,6 +96,7 @@ Content-Type: application/json
 ### POST with an invalid email address (expected: 400)
 POST {{UserManagementAPI_HostAddress}}/api/users
 Content-Type: application/json
+Authorization: Bearer {{ApiToken}}
 
 {
   "firstName": "Grace",
@@ -59,6 +108,7 @@ Content-Type: application/json
 ### POST with a duplicate email address (expected: 409)
 POST {{UserManagementAPI_HostAddress}}/api/users
 Content-Type: application/json
+Authorization: Bearer {{ApiToken}}
 
 {
   "firstName": "Charles",
@@ -70,6 +120,7 @@ Content-Type: application/json
 ### PUT the newly created user (expected: 204)
 PUT {{UserManagementAPI_HostAddress}}/api/users/1
 Content-Type: application/json
+Authorization: Bearer {{ApiToken}}
 
 {
   "firstName": "Ada",
@@ -81,6 +132,7 @@ Content-Type: application/json
 ### PUT for a non-existent user (expected: 404)
 PUT {{UserManagementAPI_HostAddress}}/api/users/9999
 Content-Type: application/json
+Authorization: Bearer {{ApiToken}}
 
 {
   "firstName": "No",
@@ -92,6 +144,7 @@ Content-Type: application/json
 ### PUT with invalid data (expected: 400)
 PUT {{UserManagementAPI_HostAddress}}/api/users/1
 Content-Type: application/json
+Authorization: Bearer {{ApiToken}}
 
 {
   "firstName": "",
@@ -103,6 +156,7 @@ Content-Type: application/json
 ### PUT attempting to use another user's email address (expected: 409)
 PUT {{UserManagementAPI_HostAddress}}/api/users/1
 Content-Type: application/json
+Authorization: Bearer {{ApiToken}}
 
 {
   "firstName": "Ada",
@@ -113,10 +167,13 @@ Content-Type: application/json
 
 ### DELETE the newly created user (expected: 204)
 DELETE {{UserManagementAPI_HostAddress}}/api/users/1
+Authorization: Bearer {{ApiToken}}
 
 ### DELETE for a non-existent user (expected: 404)
 DELETE {{UserManagementAPI_HostAddress}}/api/users/9999
+Authorization: Bearer {{ApiToken}}
 
 ### GET the deleted user to confirm it returns 404 (expected: 404)
 GET {{UserManagementAPI_HostAddress}}/api/users/1
 Accept: application/json
+Authorization: Bearer {{ApiToken}}

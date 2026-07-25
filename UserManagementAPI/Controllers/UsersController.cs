@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using UserManagementAPI.Data;
+using UserManagementAPI.DTOs;
 using UserManagementAPI.Models;
 
 namespace UserManagementAPI.Controllers;
@@ -36,8 +37,16 @@ public class UsersController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<ActionResult<User>> PostUser(User user)
+    public async Task<ActionResult<User>> PostUser([FromBody] CreateUserDto dto)
     {
+        var user = new User
+        {
+            FirstName = dto.FirstName.Trim(),
+            LastName = dto.LastName.Trim(),
+            Email = dto.Email.Trim(),
+            Department = dto.Department.Trim()
+        };
+
         _context.Users.Add(user);
         await _context.SaveChangesAsync();
 
@@ -45,13 +54,8 @@ public class UsersController : ControllerBase
     }
 
     [HttpPut("{id}")]
-    public async Task<IActionResult> PutUser(int id, User user)
+    public async Task<IActionResult> PutUser(int id, [FromBody] UpdateUserDto dto)
     {
-        if (user.Id != 0 && user.Id != id)
-        {
-            return BadRequest();
-        }
-
         var existingUser = await _context.Users.FindAsync(id);
 
         if (existingUser == null)
@@ -59,8 +63,10 @@ public class UsersController : ControllerBase
             return NotFound();
         }
 
-        existingUser.Name = user.Name;
-        existingUser.Email = user.Email;
+        existingUser.FirstName = dto.FirstName.Trim();
+        existingUser.LastName = dto.LastName.Trim();
+        existingUser.Email = dto.Email.Trim();
+        existingUser.Department = dto.Department.Trim();
 
         await _context.SaveChangesAsync();
 

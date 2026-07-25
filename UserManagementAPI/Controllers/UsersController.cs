@@ -39,11 +39,19 @@ public class UsersController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<User>> PostUser([FromBody] CreateUserDto dto)
     {
+        var normalizedEmail = dto.Email.Trim();
+        var emailExists = await _context.Users.AnyAsync(u => u.Email.ToLower() == normalizedEmail.ToLower());
+
+        if (emailExists)
+        {
+            return Conflict(new { message = "A user with this email address already exists." });
+        }
+
         var user = new User
         {
             FirstName = dto.FirstName.Trim(),
             LastName = dto.LastName.Trim(),
-            Email = dto.Email.Trim(),
+            Email = normalizedEmail,
             Department = dto.Department.Trim()
         };
 
@@ -63,9 +71,18 @@ public class UsersController : ControllerBase
             return NotFound();
         }
 
+        var normalizedEmail = dto.Email.Trim();
+        var duplicateUser = await _context.Users
+            .FirstOrDefaultAsync(u => u.Email.ToLower() == normalizedEmail.ToLower() && u.Id != id);
+
+        if (duplicateUser != null)
+        {
+            return Conflict(new { message = "A user with this email address already exists." });
+        }
+
         existingUser.FirstName = dto.FirstName.Trim();
         existingUser.LastName = dto.LastName.Trim();
-        existingUser.Email = dto.Email.Trim();
+        existingUser.Email = normalizedEmail;
         existingUser.Department = dto.Department.Trim();
 
         await _context.SaveChangesAsync();

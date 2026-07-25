@@ -1,0 +1,693 @@
+{
+  "info": {
+    "_postman_id": "3f35f6e5-07b4-4b78-9861-f7cb5e45778d",
+    "name": "User Management API - Activity 2 Debugging Tests",
+    "description": "Import this Postman v2.1 collection into Bruno and run it while the UserManagementAPI project is running locally. The collection uses http://localhost:5012 by default and exercises the manual tests listed in Docs/Activity2-Debugging-Notes.md.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5012"
+    },
+    {
+      "key": "runSuffix",
+      "value": ""
+    },
+    {
+      "key": "primaryUserId",
+      "value": ""
+    },
+    {
+      "key": "secondaryUserId",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "01 - Create primary user - expected 201",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.collectionVariables.set('runSuffix', Date.now().toString());",
+              "pm.collectionVariables.unset('primaryUserId');",
+              "pm.collectionVariables.unset('secondaryUserId');"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('returns 201 Created', function () {",
+              "  pm.response.to.have.status(201);",
+              "});",
+              "",
+              "pm.test('returns the created primary user', function () {",
+              "  const body = pm.response.json();",
+              "  pm.expect(body).to.have.property('id');",
+              "  pm.expect(body.firstName).to.eql('Ada');",
+              "  pm.expect(body.lastName).to.eql('Lovelace');",
+              "  pm.expect(body.email).to.eql(`ada.${pm.collectionVariables.get('runSuffix')}@example.com`);",
+              "  pm.expect(body.department).to.eql('Engineering');",
+              "  pm.collectionVariables.set('primaryUserId', body.id);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"firstName\": \"Ada\",\n  \"lastName\": \"Lovelace\",\n  \"email\": \"ada.{{runSuffix}}@example.com\",\n  \"department\": \"Engineering\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/users",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "users"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "02 - Duplicate primary email - expected 409",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('returns 409 Conflict', function () {",
+              "  pm.response.to.have.status(409);",
+              "});",
+              "",
+              "pm.test('returns duplicate email message', function () {",
+              "  const body = pm.response.json();",
+              "  pm.expect(body.message).to.include('email');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"firstName\": \"Charles\",\n  \"lastName\": \"Babbage\",\n  \"email\": \"ada.{{runSuffix}}@example.com\",\n  \"department\": \"Operations\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/users",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "users"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "03 - Create secondary user - expected 201",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('returns 201 Created', function () {",
+              "  pm.response.to.have.status(201);",
+              "});",
+              "",
+              "pm.test('captures secondary user ID', function () {",
+              "  const body = pm.response.json();",
+              "  pm.expect(body).to.have.property('id');",
+              "  pm.expect(body.email).to.eql(`grace.${pm.collectionVariables.get('runSuffix')}@example.com`);",
+              "  pm.collectionVariables.set('secondaryUserId', body.id);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"firstName\": \"Grace\",\n  \"lastName\": \"Hopper\",\n  \"email\": \"grace.{{runSuffix}}@example.com\",\n  \"department\": \"Engineering\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/users",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "users"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "04 - Get all users - expected 200",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('returns 200 OK', function () {",
+              "  pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('returns a user array', function () {",
+              "  const body = pm.response.json();",
+              "  pm.expect(body).to.be.an('array');",
+              "  pm.expect(body.length).to.be.greaterThan(0);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/users",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "users"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "05 - Get primary user by ID - expected 200",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('returns 200 OK', function () {",
+              "  pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('returns the primary user', function () {",
+              "  const body = pm.response.json();",
+              "  pm.expect(body.id).to.eql(Number(pm.collectionVariables.get('primaryUserId')));",
+              "  pm.expect(body.email).to.eql(`ada.${pm.collectionVariables.get('runSuffix')}@example.com`);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/users/{{primaryUserId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "users",
+            "{{primaryUserId}}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "06 - Missing first name - expected 400",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('returns 400 Bad Request', function () {",
+              "  pm.response.to.have.status(400);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"firstName\": \"\",\n  \"lastName\": \"Lovelace\",\n  \"email\": \"missing-first-name.{{runSuffix}}@example.com\",\n  \"department\": \"Engineering\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/users",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "users"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "07 - Whitespace-only first name - expected 400",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('returns 400 Bad Request', function () {",
+              "  pm.response.to.have.status(400);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"firstName\": \"   \",\n  \"lastName\": \"Lovelace\",\n  \"email\": \"whitespace-first-name.{{runSuffix}}@example.com\",\n  \"department\": \"Engineering\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/users",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "users"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "08 - Invalid email - expected 400",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('returns 400 Bad Request', function () {",
+              "  pm.response.to.have.status(400);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"firstName\": \"Grace\",\n  \"lastName\": \"Hopper\",\n  \"email\": \"not-an-email\",\n  \"department\": \"Engineering\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/users",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "users"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "09 - Update primary user - expected 204",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('returns 204 No Content', function () {",
+              "  pm.response.to.have.status(204);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"firstName\": \"Ada\",\n  \"lastName\": \"Lovelace Updated\",\n  \"email\": \"ada.updated.{{runSuffix}}@example.com\",\n  \"department\": \"Engineering\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/users/{{primaryUserId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "users",
+            "{{primaryUserId}}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "10 - Update primary with invalid data - expected 400",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('returns 400 Bad Request', function () {",
+              "  pm.response.to.have.status(400);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"firstName\": \"\",\n  \"lastName\": \"Updated\",\n  \"email\": \"bad-email\",\n  \"department\": \"Engineering\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/users/{{primaryUserId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "users",
+            "{{primaryUserId}}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "11 - Update primary using secondary email - expected 409",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('returns 409 Conflict', function () {",
+              "  pm.response.to.have.status(409);",
+              "});",
+              "",
+              "pm.test('returns duplicate email message', function () {",
+              "  const body = pm.response.json();",
+              "  pm.expect(body.message).to.include('email');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"firstName\": \"Ada\",\n  \"lastName\": \"Lovelace\",\n  \"email\": \"grace.{{runSuffix}}@example.com\",\n  \"department\": \"Engineering\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/users/{{primaryUserId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "users",
+            "{{primaryUserId}}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "12 - Get non-existent user - expected 404",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('returns 404 Not Found', function () {",
+              "  pm.response.to.have.status(404);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/users/999999",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "users",
+            "999999"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "13 - Update non-existent user - expected 404",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('returns 404 Not Found', function () {",
+              "  pm.response.to.have.status(404);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"firstName\": \"No\",\n  \"lastName\": \"User\",\n  \"email\": \"ghost.{{runSuffix}}@example.com\",\n  \"department\": \"HR\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/users/999999",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "users",
+            "999999"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "14 - Delete non-existent user - expected 404",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('returns 404 Not Found', function () {",
+              "  pm.response.to.have.status(404);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/users/999999",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "users",
+            "999999"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "15 - Delete primary user - expected 204",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('returns 204 No Content', function () {",
+              "  pm.response.to.have.status(204);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/users/{{primaryUserId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "users",
+            "{{primaryUserId}}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "16 - Get deleted primary user - expected 404",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('returns 404 Not Found', function () {",
+              "  pm.response.to.have.status(404);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/users/{{primaryUserId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "users",
+            "{{primaryUserId}}"
+          ]
+        }
+      },
+      "response": []
+    }
+  ]
+}

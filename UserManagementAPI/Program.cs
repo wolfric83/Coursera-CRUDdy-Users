@@ -32,6 +32,13 @@ app.UseMiddleware<TokenAuthenticationMiddleware>();
 // invalid-token requests may not be logged by RequestResponseLoggingMiddleware.
 app.UseMiddleware<RequestResponseLoggingMiddleware>();
 
+if (app.Environment.IsDevelopment())
+{
+    // Development-only endpoint for testing the global exception-handling middleware.
+    app.MapGet("/api/test/error", static IResult () =>
+        throw new InvalidOperationException("Test-only exception for middleware validation."));
+}
+
 app.MapControllers();
 
 app.Run();

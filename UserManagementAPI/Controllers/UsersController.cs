@@ -47,26 +47,22 @@ public class UsersController : ControllerBase
     [HttpPut("{id}")]
     public async Task<IActionResult> PutUser(int id, User user)
     {
-        if (id != user.Id)
+        if (user.Id != 0 && user.Id != id)
         {
             return BadRequest();
         }
 
-        _context.Entry(user).State = EntityState.Modified;
+        var existingUser = await _context.Users.FindAsync(id);
 
-        try
+        if (existingUser == null)
         {
-            await _context.SaveChangesAsync();
+            return NotFound();
         }
-        catch (DbUpdateConcurrencyException)
-        {
-            if (!await UserExists(id))
-            {
-                return NotFound();
-            }
 
-            throw;
-        }
+        existingUser.Name = user.Name;
+        existingUser.Email = user.Email;
+
+        await _context.SaveChangesAsync();
 
         return NoContent();
     }

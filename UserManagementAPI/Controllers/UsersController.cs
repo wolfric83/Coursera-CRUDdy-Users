@@ -11,10 +11,12 @@ namespace UserManagementAPI.Controllers;
 public class UsersController : ControllerBase
 {
     private readonly UserDbContext _context;
+    private readonly ILogger<UsersController> _logger;
 
-    public UsersController(UserDbContext context)
+    public UsersController(UserDbContext context, ILogger<UsersController> logger)
     {
         _context = context;
+        _logger = logger;
     }
 
     [HttpGet]
@@ -56,7 +58,16 @@ public class UsersController : ControllerBase
         };
 
         _context.Users.Add(user);
-        await _context.SaveChangesAsync();
+
+        try
+        {
+            await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateException ex)
+        {
+            _logger.LogError(ex, "Failed to create user.");
+            return HandleDatabaseWriteFailure();
+        }
 
         return CreatedAtAction(nameof(GetUser), new { id = user.Id }, user);
     }
@@ -85,7 +96,15 @@ public class UsersController : ControllerBase
         existingUser.Email = normalizedEmail;
         existingUser.Department = dto.Department.Trim();
 
-        await _context.SaveChangesAsync();
+        try
+        {
+            await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateException ex)
+        {
+            _logger.LogError(ex, "Failed to update user with ID {UserId}.", id);
+            return HandleDatabaseWriteFailure();
+        }
 
         return NoContent();
     }
@@ -101,9 +120,25 @@ public class UsersController : ControllerBase
         }
 
         _context.Users.Remove(user);
-        await _context.SaveChangesAsync();
+
+        try
+        {
+            await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateException ex)
+        {
+            _logger.LogError(ex, "Failed to delete user with ID {UserId}.", id);
+            return HandleDatabaseWriteFailure();
+        }
 
         return NoContent();
+    }
+
+    private ObjectResult HandleDatabaseWriteFailure()
+    {
+        return Problem(
+            title: "An unexpected error occurred while processing the request.",
+            statusCode: StatusCodes.Status500InternalServerError);
     }
 
     private async Task<bool> UserExists(int id)

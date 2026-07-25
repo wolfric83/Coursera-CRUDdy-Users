@@ -21,8 +21,6 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
-app.UseHttpsRedirection();
-
 // Middleware order matters because requests move through these components in this order,
 // then responses travel back out through them in reverse order.
 app.UseMiddleware<ExceptionHandlingMiddleware>();
@@ -31,6 +29,8 @@ app.UseMiddleware<TokenAuthenticationMiddleware>();
 // Authentication can short-circuit the pipeline before logging runs, so missing or
 // invalid-token requests may not be logged by RequestResponseLoggingMiddleware.
 app.UseMiddleware<RequestResponseLoggingMiddleware>();
+
+app.UseHttpsRedirection();
 
 if (app.Environment.IsDevelopment())
 {

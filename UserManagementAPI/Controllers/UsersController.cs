@@ -20,15 +20,21 @@ public class UsersController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<User>>> GetUsers()
+    public async Task<ActionResult<IEnumerable<User>>> GetUsers(CancellationToken cancellationToken)
     {
-        return await _context.Users.ToListAsync();
+        var users = await _context.Users
+            .AsNoTracking()
+            .ToListAsync(cancellationToken);
+
+        return users;
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<User>> GetUser(int id)
+    public async Task<ActionResult<User>> GetUser(int id, CancellationToken cancellationToken)
     {
-        var user = await _context.Users.FindAsync(id);
+        var user = await _context.Users
+            .AsNoTracking()
+            .FirstOrDefaultAsync(u => u.Id == id, cancellationToken);
 
         if (user == null)
         {
@@ -39,10 +45,10 @@ public class UsersController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<ActionResult<User>> PostUser([FromBody] CreateUserDto dto)
+    public async Task<ActionResult<User>> PostUser([FromBody] CreateUserDto dto, CancellationToken cancellationToken)
     {
         var normalizedEmail = dto.Email.Trim();
-        var emailExists = await _context.Users.AnyAsync(u => u.Email.ToLower() == normalizedEmail.ToLower());
+        var emailExists = await _context.Users.AnyAsync(u => u.Email.ToLower() == normalizedEmail.ToLower(), cancellationToken);
 
         if (emailExists)
         {
@@ -61,7 +67,7 @@ public class UsersController : ControllerBase
 
         try
         {
-            await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync(cancellationToken);
         }
         catch (DbUpdateException ex)
         {
@@ -73,9 +79,9 @@ public class UsersController : ControllerBase
     }
 
     [HttpPut("{id}")]
-    public async Task<IActionResult> PutUser(int id, [FromBody] UpdateUserDto dto)
+    public async Task<IActionResult> PutUser(int id, [FromBody] UpdateUserDto dto, CancellationToken cancellationToken)
     {
-        var existingUser = await _context.Users.FindAsync(id);
+        var existingUser = await _context.Users.FirstOrDefaultAsync(u => u.Id == id, cancellationToken);
 
         if (existingUser == null)
         {
@@ -84,7 +90,7 @@ public class UsersController : ControllerBase
 
         var normalizedEmail = dto.Email.Trim();
         var duplicateUser = await _context.Users
-            .FirstOrDefaultAsync(u => u.Email.ToLower() == normalizedEmail.ToLower() && u.Id != id);
+            .FirstOrDefaultAsync(u => u.Email.ToLower() == normalizedEmail.ToLower() && u.Id != id, cancellationToken);
 
         if (duplicateUser != null)
         {
@@ -98,7 +104,7 @@ public class UsersController : ControllerBase
 
         try
         {
-            await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync(cancellationToken);
         }
         catch (DbUpdateException ex)
         {
@@ -110,9 +116,9 @@ public class UsersController : ControllerBase
     }
 
     [HttpDelete("{id}")]
-    public async Task<IActionResult> DeleteUser(int id)
+    public async Task<IActionResult> DeleteUser(int id, CancellationToken cancellationToken)
     {
-        var user = await _context.Users.FindAsync(id);
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == id, cancellationToken);
 
         if (user == null)
         {
@@ -123,7 +129,7 @@ public class UsersController : ControllerBase
 
         try
         {
-            await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync(cancellationToken);
         }
         catch (DbUpdateException ex)
         {
@@ -141,8 +147,8 @@ public class UsersController : ControllerBase
             statusCode: StatusCodes.Status500InternalServerError);
     }
 
-    private async Task<bool> UserExists(int id)
+    private async Task<bool> UserExists(int id, CancellationToken cancellationToken)
     {
-        return await _context.Users.AnyAsync(e => e.Id == id);
+        return await _context.Users.AnyAsync(e => e.Id == id, cancellationToken);
     }
 }

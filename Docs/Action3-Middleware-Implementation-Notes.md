@@ -28,6 +28,8 @@ The client receives a safe, consistent JSON response:
 
 The middleware does not return the exception message or stack trace to the client. This avoids exposing internal implementation details while still giving the client a trace ID that can be matched with server logs.
 
+As part of the final middleware review, redundant controller-level write-failure catch blocks were removed from `UsersController`. Unexpected database or endpoint failures are now allowed to propagate to `ExceptionHandlingMiddleware`, which keeps exception handling centralized and avoids duplicating generic `500` response logic inside controller actions.
+
 ## Token-Authentication Middleware
 
 `TokenAuthenticationMiddleware` protects routes beginning with `/api`. It reads a bearer token from the `Authorization` header and compares it with the configured value at `ApiAuthentication:Token`.
@@ -105,23 +107,27 @@ That alternative order would allow the logging middleware to see every incoming 
 
 ## How the Middleware Was Tested
 
-Middleware test requests were added to `UserManagementAPI.http`. These requests cover valid-token access, missing authorization, invalid bearer tokens, incorrectly formatted authorization headers, normal controller responses, invalid model data, and the development-only exception endpoint.
+Middleware test requests were added to `UserManagementAPI.http` and a Postman/Bruno collection was added at `Docs/Activity3-Middleware-Postman.postman_collection.json`. These requests cover valid-token access, missing authorization, invalid bearer tokens, incorrectly formatted authorization headers, normal controller responses, invalid model data, and the development-only exception endpoint.
+
+All manual Activity 3 middleware tests passed with the expected results.
 
 | Test | Token condition | Expected status | Expected log or response | Actual result | Pass/Fail |
 | --- | --- | --- | --- | --- | --- |
-| GET `/api/users` with valid token | `Authorization: Bearer fake-development-token-for-coursework-only` | 200 | Response from users endpoint; request/response log includes method, path, status code, and elapsed time |  |  |
-| GET `/api/users` with no Authorization header | Missing | 401 | JSON response with `error` set to `Unauthorized.` and `statusCode` set to `401`; may not be logged by request/response logging middleware because authentication short-circuits first |  |  |
-| GET `/api/users` with invalid bearer token | Invalid bearer token | 401 | JSON response with `error` set to `Unauthorized.` and `statusCode` set to `401`; supplied token is not logged |  |  |
-| GET `/api/users` with incorrectly formatted Authorization header | Header does not use Bearer scheme | 401 | JSON response with `error` set to `Unauthorized.` and `statusCode` set to `401` |  |  |
-| GET `/api/users/9999` with valid token | Valid bearer token | 404 | Controller returns `404 Not Found`; request/response log records final status code |  |  |
-| GET `/api/test/error` with valid token in Development | Valid bearer token | 500 | Global exception middleware returns JSON with `error`, `statusCode`, and `traceId`; test-only exception message is not exposed |  |  |
-| POST `/api/users` with invalid user data and valid token | Valid bearer token | 400 | ASP.NET Core validation returns `400 Bad Request`; request/response log records final status code |  |  |
+| GET `/api/users` with valid token | `Authorization: Bearer fake-development-token-for-coursework-only` | 200 | Response from users endpoint; request/response log includes method, path, status code, and elapsed time | Returned 200 and logged request/response details | Pass |
+| GET `/api/users` with no Authorization header | Missing | 401 | JSON response with `error` set to `Unauthorized.` and `statusCode` set to `401`; may not be logged by request/response logging middleware because authentication short-circuits first | Returned 401 with expected unauthorized JSON | Pass |
+| GET `/api/users` with invalid bearer token | Invalid bearer token | 401 | JSON response with `error` set to `Unauthorized.` and `statusCode` set to `401`; supplied token is not logged | Returned 401 with expected unauthorized JSON | Pass |
+| GET `/api/users` with incorrectly formatted Authorization header | Header does not use Bearer scheme | 401 | JSON response with `error` set to `Unauthorized.` and `statusCode` set to `401` | Returned 401 with expected unauthorized JSON | Pass |
+| GET `/api/users/9999` with valid token | Valid bearer token | 404 | Controller returns `404 Not Found`; request/response log records final status code | Returned 404 and logged final status code | Pass |
+| GET `/api/test/error` with valid token in Development | Valid bearer token | 500 | Global exception middleware returns JSON with `error`, `statusCode`, and `traceId`; test-only exception message is not exposed | Returned 500 with expected safe JSON and no test exception details | Pass |
+| POST `/api/users` with invalid user data and valid token | Valid bearer token | 400 | ASP.NET Core validation returns `400 Bad Request`; request/response log records final status code | Returned 400 validation response and logged final status code | Pass |
 
 ## How Copilot Assisted
 
 Copilot assisted by reviewing the existing ASP.NET Core request pipeline, identifying where custom middleware should be placed, and helping create focused middleware classes with clear responsibilities.
 
 Copilot also helped review the implementation for common middleware mistakes, including failing to await the next middleware, calling the next middleware more than once, exposing exception details, logging tokens, accidentally blocking Swagger, and making the development exception endpoint available outside development.
+
+Copilot also helped identify that the controller-level generic database exception handling duplicated the new global exception middleware. Those redundant catch blocks were removed so unexpected exceptions are not swallowed or handled inconsistently.
 
 During review, Copilot identified that the coursework-required order creates an auditing limitation because authentication can reject requests before they reach the logging middleware. This limitation was documented rather than changing the order, because the activity instructions require the current order.
 

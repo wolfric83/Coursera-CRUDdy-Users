@@ -57,6 +57,8 @@ In Bruno:
 
 ## Test Coverage
 
+All manual middleware tests passed with the expected status codes and response shapes.
+
 | Test | Token condition | Expected status | Expected response or behavior |
 | --- | --- | --- | --- |
 | Swagger/OpenAPI request | No token | 200 | OpenAPI JSON is returned, showing non-API development resources are not blocked |
